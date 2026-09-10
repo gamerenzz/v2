@@ -4,7 +4,7 @@ allow-lan: true
 mode: rule
 log-level: info
 proxies:
-- name: https://lihi1.com/l0QrZ
+- name: fr2e
   type: vmess
   server: fr2e-wobx.v2freevpn.com
   port: 80
@@ -21,7 +21,7 @@ proxies:
       Host:
       - fr2e-wobx.v2freevpn.com
     v2ray-http-upgrade: true
-- name: https://lihi1.com/l0QrZ
+- name: us2e
   type: vmess
   server: us2e-CKlS.v2freevpn.com
   port: 80
@@ -38,7 +38,7 @@ proxies:
       Host:
       - us2e-CKlS.v2freevpn.com
     v2ray-http-upgrade: true
-- name: https://lihi1.com/l0QrZ
+- name: us3e
   type: vmess
   server: us3e-hg7g.v2freevpn.com
   port: 80
@@ -55,7 +55,7 @@ proxies:
       Host:
       - us3e-hg7g.v2freevpn.com
     v2ray-http-upgrade: true
-- name: https://lihi1.com/l0QrZ
+- name: us4e
   type: vmess
   server: us4e-1QFo.v2freevpn.com
   port: 80
@@ -77,21 +77,22 @@ proxy-groups:
   type: select
   proxies:
   - AUTO
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
+  - fr2e
+  - us2e
+  - us3e
+  - us4e
 - name: AUTO
   type: url-test
   url: https://cp.cloudflare.com/generate_204
   interval: 300
   tolerance: 50
   proxies:
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
-  - https://lihi1.com/l0QrZ
+  - fr2e
+  - us2e
+  - us3e
+  - us4e
 rules:
+- DOMAIN-SUFFIX,v2freevpn.com,DIRECT
 - DOMAIN-SUFFIX,18838005.xyz,DIRECT
 - DOMAIN-SUFFIX,cn,DIRECT
 - DOMAIN-KEYWORD,baidu,DIRECT

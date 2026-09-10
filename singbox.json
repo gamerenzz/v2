@@ -22,6 +22,7 @@
     "rules": [
       {
         "domain_suffix": [
+          "v2freevpn.com",
           "18838005.xyz",
           ".cn"
         ],
@@ -59,10 +60,10 @@
       "tag": "proxy",
       "outbounds": [
         "auto",
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ"
+        "fr2e",
+        "us2e",
+        "us3e",
+        "us4e"
       ],
       "default": "auto"
     },
@@ -70,10 +71,10 @@
       "type": "urltest",
       "tag": "auto",
       "outbounds": [
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ",
-        "https://lihi1.com/l0QrZ"
+        "fr2e",
+        "us2e",
+        "us3e",
+        "us4e"
       ],
       "url": "https://cp.cloudflare.com/generate_204",
       "interval": "3m",
@@ -81,7 +82,7 @@
     },
     {
       "type": "vmess",
-      "tag": "https://lihi1.com/l0QrZ",
+      "tag": "fr2e",
       "server": "fr2e-wobx.v2freevpn.com",
       "server_port": 80,
       "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
@@ -95,7 +96,7 @@
     },
     {
       "type": "vmess",
-      "tag": "https://lihi1.com/l0QrZ",
+      "tag": "us2e",
       "server": "us2e-CKlS.v2freevpn.com",
       "server_port": 80,
       "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
@@ -109,7 +110,7 @@
     },
     {
       "type": "vmess",
-      "tag": "https://lihi1.com/l0QrZ",
+      "tag": "us3e",
       "server": "us3e-hg7g.v2freevpn.com",
       "server_port": 80,
       "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
@@ -123,7 +124,7 @@
     },
     {
       "type": "vmess",
-      "tag": "https://lihi1.com/l0QrZ",
+      "tag": "us4e",
       "server": "us4e-1QFo.v2freevpn.com",
       "server_port": 80,
       "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
@@ -167,6 +168,7 @@
       {
         "domain_suffix": [
           ".cn",
+          "v2freevpn.com",
           "18838005.xyz"
         ],
         "action": "route",
