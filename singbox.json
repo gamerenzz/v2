@@ -1,0 +1,192 @@
+{
+  "log": {
+    "level": "debug",
+    "timestamp": true
+  },
+  "dns": {
+    "servers": [
+      {
+        "type": "tcp",
+        "tag": "dns-remote",
+        "server": "8.8.8.8",
+        "server_port": 53,
+        "detour": "proxy"
+      },
+      {
+        "type": "udp",
+        "tag": "dns-direct",
+        "server": "223.5.5.5",
+        "server_port": 53
+      }
+    ],
+    "rules": [
+      {
+        "domain_suffix": [
+          "18838005.xyz",
+          ".cn"
+        ],
+        "server": "dns-direct"
+      },
+      {
+        "domain_keyword": [
+          "baidu",
+          "qq",
+          "weixin",
+          "alipay",
+          "taobao",
+          "bilibili"
+        ],
+        "server": "dns-direct"
+      }
+    ],
+    "final": "dns-remote",
+    "strategy": "ipv4_only"
+  },
+  "inbounds": [
+    {
+      "type": "tun",
+      "tag": "tun-in",
+      "address": [
+        "172.19.0.1/30"
+      ],
+      "auto_route": true,
+      "strict_route": true
+    }
+  ],
+  "outbounds": [
+    {
+      "type": "selector",
+      "tag": "proxy",
+      "outbounds": [
+        "auto",
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ"
+      ],
+      "default": "auto"
+    },
+    {
+      "type": "urltest",
+      "tag": "auto",
+      "outbounds": [
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ",
+        "https://lihi1.com/l0QrZ"
+      ],
+      "url": "https://cp.cloudflare.com/generate_204",
+      "interval": "3m",
+      "idle_timeout": "30m"
+    },
+    {
+      "type": "vmess",
+      "tag": "https://lihi1.com/l0QrZ",
+      "server": "fr2e-wobx.v2freevpn.com",
+      "server_port": 80,
+      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "fr2e-wobx.v2freevpn.com",
+        "path": "/fr2e-aadgogofa"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "https://lihi1.com/l0QrZ",
+      "server": "us2e-CKlS.v2freevpn.com",
+      "server_port": 80,
+      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us2e-CKlS.v2freevpn.com",
+        "path": "/us2e-kjd689s3nay"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "https://lihi1.com/l0QrZ",
+      "server": "us3e-hg7g.v2freevpn.com",
+      "server_port": 80,
+      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us3e-hg7g.v2freevpn.com",
+        "path": "/v124ccxmxm35"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "https://lihi1.com/l0QrZ",
+      "server": "us4e-1QFo.v2freevpn.com",
+      "server_port": 80,
+      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us4e-1QFo.v2freevpn.com",
+        "path": "/v149-dskds65"
+      }
+    },
+    {
+      "type": "direct",
+      "tag": "direct"
+    },
+    {
+      "type": "block",
+      "tag": "block"
+    }
+  ],
+  "route": {
+    "default_domain_resolver": "dns-direct",
+    "rules": [
+      {
+        "action": "sniff"
+      },
+      {
+        "protocol": "dns",
+        "action": "hijack-dns"
+      },
+      {
+        "network": "udp",
+        "port": 443,
+        "action": "reject"
+      },
+      {
+        "ip_is_private": true,
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "domain_suffix": [
+          ".cn",
+          "18838005.xyz"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      },
+      {
+        "domain_keyword": [
+          "baidu",
+          "qq",
+          "weixin",
+          "alipay",
+          "taobao",
+          "bilibili",
+          "jd"
+        ],
+        "action": "route",
+        "outbound": "direct"
+      }
+    ],
+    "auto_detect_interface": true,
+    "final": "proxy"
+  }
+}

@@ -1,0 +1,106 @@
+port: 7890
+socks-port: 7891
+allow-lan: true
+mode: rule
+log-level: info
+proxies:
+- name: https://lihi1.com/l0QrZ
+  type: vmess
+  server: fr2e-wobx.v2freevpn.com
+  port: 80
+  uuid: 2a8a10fb-9ca3-367e-a234-cf09f841be4f
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: false
+  network: http
+  http-opts:
+    path:
+    - /fr2e-aadgogofa
+    headers:
+      Host:
+      - fr2e-wobx.v2freevpn.com
+    v2ray-http-upgrade: true
+- name: https://lihi1.com/l0QrZ
+  type: vmess
+  server: us2e-CKlS.v2freevpn.com
+  port: 80
+  uuid: 2a8a10fb-9ca3-367e-a234-cf09f841be4f
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: false
+  network: http
+  http-opts:
+    path:
+    - /us2e-kjd689s3nay
+    headers:
+      Host:
+      - us2e-CKlS.v2freevpn.com
+    v2ray-http-upgrade: true
+- name: https://lihi1.com/l0QrZ
+  type: vmess
+  server: us3e-hg7g.v2freevpn.com
+  port: 80
+  uuid: 2a8a10fb-9ca3-367e-a234-cf09f841be4f
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: false
+  network: http
+  http-opts:
+    path:
+    - /v124ccxmxm35
+    headers:
+      Host:
+      - us3e-hg7g.v2freevpn.com
+    v2ray-http-upgrade: true
+- name: https://lihi1.com/l0QrZ
+  type: vmess
+  server: us4e-1QFo.v2freevpn.com
+  port: 80
+  uuid: 2a8a10fb-9ca3-367e-a234-cf09f841be4f
+  alterId: 0
+  cipher: auto
+  udp: true
+  tls: false
+  network: http
+  http-opts:
+    path:
+    - /v149-dskds65
+    headers:
+      Host:
+      - us4e-1QFo.v2freevpn.com
+    v2ray-http-upgrade: true
+proxy-groups:
+- name: PROXY
+  type: select
+  proxies:
+  - AUTO
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+- name: AUTO
+  type: url-test
+  url: https://cp.cloudflare.com/generate_204
+  interval: 300
+  tolerance: 50
+  proxies:
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+  - https://lihi1.com/l0QrZ
+rules:
+- DOMAIN-SUFFIX,18838005.xyz,DIRECT
+- DOMAIN-SUFFIX,cn,DIRECT
+- DOMAIN-KEYWORD,baidu,DIRECT
+- DOMAIN-KEYWORD,qq,DIRECT
+- DOMAIN-KEYWORD,weixin,DIRECT
+- DOMAIN-KEYWORD,alipay,DIRECT
+- DOMAIN-KEYWORD,taobao,DIRECT
+- DOMAIN-KEYWORD,bilibili,DIRECT
+- DOMAIN-KEYWORD,jd,DIRECT
+- GEOIP,LAN,DIRECT
+- GEOIP,CN,DIRECT
+- MATCH,PROXY
