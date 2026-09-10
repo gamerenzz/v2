@@ -6,11 +6,11 @@ import yaml
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
-# 1. 解密参数
+# 1. 解密密钥与偏移量
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 内置订阅源（按顺序轮询重试）
+# 2. 内置订阅源
 URLS = [
     "https://bannedbook.github.io/fanqiang/vsp-en.py",
     "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-en.py",
@@ -34,8 +34,31 @@ def fetch_and_decrypt():
             print(f"[-] 请求/解密失败: {e}")
     raise Exception("所有订阅源均无法拉取/解密！")
 
+def clean_node_name(ps_name, server_addr, existing_names):
+    """
+    智能清理节点名称：
+    如果 ps 是广告网址（如 https://lihi1.com...），则使用 server 前缀作为名称并自动去重
+    """
+    name = ps_name.strip()
+    # 判断是否为 URL 链接广告
+    if name.startswith("http://") or name.startswith("https://") or not name:
+        # 从 server (例如 fr2e-wobx.v2freevpn.com) 提取前缀 'fr2e'
+        prefix = server_addr.split("-")[0] if "-" in server_addr else server_addr.split(".")[0]
+        name = prefix.lower()
+
+    # 去重处理，避免同名导致 sing-box / clash 崩溃
+    original_name = name
+    count = 1
+    while name in existing_names:
+        name = f"{original_name}-{count}"
+        count += 1
+    existing_names.add(name)
+    return name
+
 def parse_vmess_links(decrypted_text):
     vmess_nodes = []
+    existing_names = set()
+    
     # 提取所有 vmess:// 链接
     links = re.findall(r'vmess://[a-zA-Z0-9+/=]+', decrypted_text)
     for link in links:
@@ -43,14 +66,22 @@ def parse_vmess_links(decrypted_text):
             b64_str = link.replace("vmess://", "")
             raw_json = base64.b64decode(b64_str).decode('utf-8')
             node_info = json.loads(raw_json)
-            vmess_nodes.append((link, node_info))
+            
+            # 清理和规范化名称
+            valid_name = clean_node_name(node_info.get("ps", ""), node_info.get("add", ""), existing_names)
+            node_info["ps"] = valid_name
+            
+            # 重新生成规范的 vmess 链接
+            new_b64 = base64.b64encode(json.dumps(node_info).encode('utf-8')).decode('utf-8')
+            new_link = f"vmess://{new_b64}"
+            
+            vmess_nodes.append((new_link, node_info))
         except Exception as e:
             print(f"[-] 解析节点异常: {e}")
     return vmess_nodes
 
 def generate_v2ray(vmess_nodes):
     all_links = "\n".join([item[0] for item in vmess_nodes])
-    # 生成标准的 base64 订阅
     return base64.b64encode(all_links.encode('utf-8')).decode('utf-8')
 
 def generate_clash(vmess_nodes):
@@ -58,9 +89,10 @@ def generate_clash(vmess_nodes):
     proxy_names = []
 
     for _, n in vmess_nodes:
-        name = n.get("ps", "node")
+        name = n.get("ps")
         proxy_names.append(name)
         
+        server_host = n.get("host") if n.get("host") else n.get("add")
         proxy_item = {
             "name": name,
             "type": "vmess",
@@ -75,13 +107,11 @@ def generate_clash(vmess_nodes):
             "http-opts": {
                 "path": [n.get("path", "/")],
                 "headers": {
-                    "Host": [n.get("host") if n.get("host") else n.get("add")]
+                    "Host": [server_host]
                 }
             }
         }
-        # 如果是 httpupgrade 传输
         if n.get("net") == "httpupgrade":
-            proxy_item["network"] = "http"
             proxy_item["http-opts"]["v2ray-http-upgrade"] = True
             
         proxies.append(proxy_item)
@@ -109,6 +139,7 @@ def generate_clash(vmess_nodes):
             }
         ],
         "rules": [
+            "DOMAIN-SUFFIX,v2freevpn.com,DIRECT",
             "DOMAIN-SUFFIX,18838005.xyz,DIRECT",
             "DOMAIN-SUFFIX,cn,DIRECT",
             "DOMAIN-KEYWORD,baidu,DIRECT",
@@ -126,9 +157,9 @@ def generate_clash(vmess_nodes):
     return yaml.dump(clash_config, allow_unicode=True, sort_keys=False)
 
 def generate_singbox(vmess_nodes):
-    node_tags = [n.get("ps", f"node{i}") for i, (_, n) in enumerate(vmess_nodes)]
+    node_tags = [n.get("ps") for _, n in vmess_nodes]
     
-    # 动态构建 outbounds
+    # 构建 outbounds
     outbounds = [
         {
             "type": "selector",
@@ -192,6 +223,7 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
+                        "v2freevpn.com",
                         "18838005.xyz",
                         ".cn"
                     ],
@@ -247,6 +279,7 @@ def generate_singbox(vmess_nodes):
                 {
                     "domain_suffix": [
                         ".cn",
+                        "v2freevpn.com",
                         "18838005.xyz"
                     ],
                     "action": "route",
@@ -275,7 +308,7 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 共解析到 {len(nodes)} 个节点")
+    print(f"[*] 共解析到 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
 
     # 1. 生成 v2ray 订阅
     v2ray_content = generate_v2ray(nodes)
