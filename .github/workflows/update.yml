@@ -1,0 +1,38 @@
+name: Update Subscriptions
+
+on:
+  schedule:
+    # 每天 04:00 和 16:00 (UTC+8 北京时间) 定时执行
+    - cron: '0 20,8 * * *'
+  workflow_dispatch: # 支持手动一键运行
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出仓库代码
+        uses: actions/checkout@v4
+
+      - name: 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: 安装 Python 依赖
+        run: |
+          pip install -r requirements.txt
+
+      - name: 执行转换脚本
+        run: |
+          python update.py
+
+      - name: 提交并推送到仓库
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add v2ray.txt clash.yaml singbox.json
+          git commit -m "Auto update: $(date '+%Y-%m-%d %H:%M:%S')" || exit 0
+          git push
