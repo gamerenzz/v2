@@ -223,7 +223,6 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
-                        "v2freevpn.com",
                         "18838005.xyz",
                         ".cn"
                     ],
@@ -279,7 +278,6 @@ def generate_singbox(vmess_nodes):
                 {
                     "domain_suffix": [
                         ".cn",
-                        "v2freevpn.com",
                         "18838005.xyz"
                     ],
                     "action": "route",
