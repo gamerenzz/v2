@@ -6,15 +6,16 @@ import yaml
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
-# 1. 解密参数
+# 1. 解密密钥与偏移量 (AES-256-CBC)
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 内置订阅源列表
+# 2. 真实有效的主订阅源列表（按优先级排列）
 URLS = [
-    "https://bannedbook.github.io/fanqiang/vsp-en.py",
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-en.py",
-    "https://gitlab.com/bobmolen/cloud/raw/master/vsp-en.py"
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp.py",
+    "https://bannedbook.github.io/fanqiang/vsp.py",
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-zh.py",
+    "https://gitlab.com/bobmolen/cloud/raw/master/vsp.py"
 ]
 
 def fetch_and_decrypt():
@@ -129,6 +130,7 @@ def generate_clash(vmess_nodes):
             }
         ],
         "rules": [
+            "DOMAIN-SUFFIX,18838005.xyz,DIRECT",
             "DOMAIN-SUFFIX,cn,DIRECT",
             "DOMAIN-KEYWORD,baidu,DIRECT",
             "DOMAIN-KEYWORD,qq,DIRECT",
@@ -185,7 +187,6 @@ def generate_singbox(vmess_nodes):
     outbounds.append({"type": "direct", "tag": "direct"})
     outbounds.append({"type": "block", "tag": "block"})
 
-    # 组装完整的 sing-box 1.14.0 配置
     singbox_config = {
         "log": {
             "level": "debug",
@@ -210,6 +211,7 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
+                        "18838005.xyz",
                         ".cn"
                     ],
                     "server": "dns-direct"
@@ -263,7 +265,8 @@ def generate_singbox(vmess_nodes):
                 },
                 {
                     "domain_suffix": [
-                        ".cn"
+                        ".cn",
+                        "18838005.xyz"
                     ],
                     "action": "route",
                     "outbound": "direct"
@@ -291,23 +294,18 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 共解析到 {len(nodes)} 个节点：{[n['ps'] for _, n in nodes]}")
+    print(f"[*] 成功获取并解密 {len(nodes)} 个节点：{[n['ps'] for _, n in nodes]}")
 
-    # 1. 生成 v2ray.txt
-    v2ray_content = generate_v2ray(nodes)
     with open("v2ray.txt", "w", encoding="utf-8") as f:
-        f.write(v2ray_content)
+        f.write(generate_v2ray(nodes))
 
-    # 2. 生成 clash.yaml
-    clash_content = generate_clash(nodes)
     with open("clash.yaml", "w", encoding="utf-8") as f:
-        f.write(clash_content)
+        f.write(generate_clash(nodes))
 
-    # 3. 生成 singbox.json
-    singbox_content = generate_singbox(nodes)
     with open("singbox.json", "w", encoding="utf-8") as f:
-        f.write(singbox_content)
-    print("[+] 全部配置生成完毕！")
+        f.write(generate_singbox(nodes))
+
+    print("[+] 全部更新完毕！")
 
 if __name__ == "__main__":
     main()
