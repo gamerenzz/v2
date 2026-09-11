@@ -6,11 +6,11 @@ import yaml
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
-# 1. 解密密钥与偏移量 (AES-256-CBC)
+# 1. 解密密钥与偏移量
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 真实有效的主订阅源列表（按优先级排列）
+# 2. 你的 3 个有效订阅源
 URLS = [
     "https://bannedbook.github.io/fanqiang/vsp-en.py",
     "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-en.py",
@@ -33,6 +33,20 @@ def fetch_and_decrypt():
         except Exception as e:
             print(f"[-] 请求/解密失败: {e}")
     raise Exception("所有订阅源均无法拉取/解密！")
+
+def resolve_domain_doh(domain):
+    """通过 Cloudflare DoH 安全解析真实 IP，彻底避免国内 DNS 污染"""
+    try:
+        url = f"https://1.1.1.1/dns-query?name={domain}&type=A"
+        headers = {"Accept": "application/dns-json"}
+        res = requests.get(url, headers=headers, timeout=5).json()
+        if "Answer" in res:
+            for ans in res["Answer"]:
+                if ans.get("type") == 1: # A 记录
+                    return ans["data"]
+    except Exception:
+        pass
+    return domain # 兜底返回原域名
 
 def clean_node_name(ps_name, server_addr, existing_names):
     name = ps_name.strip()
@@ -59,8 +73,20 @@ def parse_vmess_links(decrypted_text):
             raw_json = base64.b64decode(b64_str).decode('utf-8')
             node_info = json.loads(raw_json)
             
+            # 清理名称
             valid_name = clean_node_name(node_info.get("ps", ""), node_info.get("add", ""), existing_names)
             node_info["ps"] = valid_name
+            
+            # 记录原始域名作为 Host
+            original_domain = node_info.get("add")
+            if not node_info.get("host"):
+                node_info["host"] = original_domain
+
+            # 安全解析真实 IP，防止大陆本地 DNS 污染导致节点断网
+            print(f"[*] 解析节点 {valid_name} ({original_domain}) 的真实 IP...")
+            real_ip = resolve_domain_doh(original_domain)
+            node_info["real_ip"] = real_ip
+            print(f"    -> IP: {real_ip}")
             
             new_b64 = base64.b64encode(json.dumps(node_info).encode('utf-8')).decode('utf-8')
             new_link = f"vmess://{new_b64}"
@@ -82,11 +108,13 @@ def generate_clash(vmess_nodes):
         name = n.get("ps")
         proxy_names.append(name)
         
-        server_host = n.get("host") if n.get("host") else n.get("add")
+        server_host = n.get("host")
+        server_ip = n.get("real_ip", n.get("add"))
+
         proxy_item = {
             "name": name,
             "type": "vmess",
-            "server": n.get("add"),
+            "server": server_ip,
             "port": int(n.get("port", 80)),
             "uuid": n.get("id"),
             "alterId": int(n.get("aid", 0)),
@@ -129,7 +157,6 @@ def generate_clash(vmess_nodes):
             }
         ],
         "rules": [
-            "DOMAIN-SUFFIX,18838005.xyz,DIRECT",
             "DOMAIN-SUFFIX,cn,DIRECT",
             "DOMAIN-KEYWORD,baidu,DIRECT",
             "DOMAIN-KEYWORD,qq,DIRECT",
@@ -166,11 +193,13 @@ def generate_singbox(vmess_nodes):
     ]
 
     for _, n in vmess_nodes:
-        server_host = n.get("host") if n.get("host") else n.get("add")
+        server_host = n.get("host")
+        server_ip = n.get("real_ip", n.get("add"))
+        
         node_outbound = {
             "type": "vmess",
             "tag": n.get("ps"),
-            "server": n.get("add"),
+            "server": server_ip,
             "server_port": int(n.get("port", 80)),
             "uuid": n.get("id"),
             "security": n.get("scy", "auto"),
@@ -210,7 +239,6 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
-                        "18838005.xyz",
                         ".cn"
                     ],
                     "server": "dns-direct"
@@ -264,8 +292,7 @@ def generate_singbox(vmess_nodes):
                 },
                 {
                     "domain_suffix": [
-                        ".cn",
-                        "18838005.xyz"
+                        ".cn"
                     ],
                     "action": "route",
                     "outbound": "direct"
@@ -304,7 +331,7 @@ def main():
     with open("singbox.json", "w", encoding="utf-8") as f:
         f.write(generate_singbox(nodes))
 
-    print("[+] 全部更新完毕！")
+    print("[+] 全部文件更新完成！")
 
 if __name__ == "__main__":
     main()
