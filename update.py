@@ -14,7 +14,7 @@ IV = b"36KeAARKZuKF39N9"
 URLS = [
     "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp.py",
     "https://bannedbook.github.io/fanqiang/vsp.py",
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-zh.py",
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp.py",
     "https://gitlab.com/bobmolen/cloud/raw/master/vsp.py"
 ]
 
