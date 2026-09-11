@@ -22,6 +22,7 @@
     "rules": [
       {
         "domain_suffix": [
+          "18838005.xyz",
           ".cn"
         ],
         "server": "dns-direct"
@@ -58,10 +59,14 @@
       "tag": "proxy",
       "outbounds": [
         "auto",
-        "fr2e",
-        "us2e",
-        "us3e",
-        "us4e"
+        "fr1a",
+        "us1a",
+        "us2a",
+        "us3a",
+        "us4a",
+        "us5a",
+        "us6a",
+        "us7a"
       ],
       "default": "auto"
     },
@@ -69,10 +74,14 @@
       "type": "urltest",
       "tag": "auto",
       "outbounds": [
-        "fr2e",
-        "us2e",
-        "us3e",
-        "us4e"
+        "fr1a",
+        "us1a",
+        "us2a",
+        "us3a",
+        "us4a",
+        "us5a",
+        "us6a",
+        "us7a"
       ],
       "url": "https://cp.cloudflare.com/generate_204",
       "interval": "3m",
@@ -80,58 +89,114 @@
     },
     {
       "type": "vmess",
-      "tag": "fr2e",
-      "server": "fr2e-wobx.v2freevpn.com",
+      "tag": "fr1a",
+      "server": "fr1a-20260812xxx.18838005.xyz",
       "server_port": 80,
-      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "fr2e-wobx.v2freevpn.com",
-        "path": "/fr2e-aadgogofa"
+        "host": "fr1a-20260812xxx.18838005.xyz",
+        "path": "/windows11"
       }
     },
     {
       "type": "vmess",
-      "tag": "us2e",
-      "server": "us2e-CKlS.v2freevpn.com",
+      "tag": "us1a",
+      "server": "us1a-20260812add.18838005.xyz",
       "server_port": 80,
-      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us2e-CKlS.v2freevpn.com",
-        "path": "/us2e-kjd689s3nay"
+        "host": "us1a-20260812add.18838005.xyz",
+        "path": "/windows"
       }
     },
     {
       "type": "vmess",
-      "tag": "us3e",
-      "server": "us3e-hg7g.v2freevpn.com",
+      "tag": "us2a",
+      "server": "us2a-20260812kid.18838005.xyz",
       "server_port": 80,
-      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us3e-hg7g.v2freevpn.com",
-        "path": "/v124ccxmxm35"
+        "host": "us2a-20260812kid.18838005.xyz",
+        "path": "/windows8"
       }
     },
     {
       "type": "vmess",
-      "tag": "us4e",
-      "server": "us4e-1QFo.v2freevpn.com",
+      "tag": "us3a",
+      "server": "us3a-20260812okc.18838005.xyz",
       "server_port": 80,
-      "uuid": "2a8a10fb-9ca3-367e-a234-cf09f841be4f",
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us4e-1QFo.v2freevpn.com",
-        "path": "/v149-dskds65"
+        "host": "us3a-20260812okc.18838005.xyz",
+        "path": "/windows10"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "us4a",
+      "server": "us4a-20260830ued.18838005.xyz",
+      "server_port": 80,
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us4a-20260830ued.18838005.xyz",
+        "path": "/windows11"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "us5a",
+      "server": "us5a-20260828ket.18838005.xyz",
+      "server_port": 80,
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us5a-20260828ket.18838005.xyz",
+        "path": "/windows11"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "us6a",
+      "server": "us6a-20260828aeo.18838005.xyz",
+      "server_port": 80,
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us6a-20260828aeo.18838005.xyz",
+        "path": "/windows11"
+      }
+    },
+    {
+      "type": "vmess",
+      "tag": "us7a",
+      "server": "us7a-20260830pag.18838005.xyz",
+      "server_port": 80,
+      "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
+      "security": "auto",
+      "alter_id": 0,
+      "transport": {
+        "type": "httpupgrade",
+        "host": "us7a-20260830pag.18838005.xyz",
+        "path": "/windows11"
       }
     },
     {
@@ -165,7 +230,8 @@
       },
       {
         "domain_suffix": [
-          ".cn"
+          ".cn",
+          "18838005.xyz"
         ],
         "action": "route",
         "outbound": "direct"
