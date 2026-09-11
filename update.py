@@ -1,6 +1,7 @@
 import base64
 import json
 import re
+import socket
 import requests
 import yaml
 from Crypto.Cipher import AES
@@ -28,24 +29,31 @@ def fetch_and_decrypt():
                 raw_cipher = base64.b64decode(encrypted_base64)
                 cipher = AES.new(KEY, AES.MODE_CBC, IV)
                 decrypted = unpad(cipher.decrypt(raw_cipher), AES.block_size).decode('utf-8')
-
-                # 如果解密后没有 vmess://，尝试再 base64 解码一次（处理嵌套 Base64）
-                if 'vmess://' not in decrypted:
-                    try:
-                        decrypted_try = base64.b64decode(decrypted).decode('utf-8')
-                        if 'vmess://' in decrypted_try:
-                            decrypted = decrypted_try
-                            print("[*] 检测到嵌套 Base64，已二次解码")
-                    except Exception:
-                        pass
-
                 print("[+] 解密成功！")
-                print(f"[*] 解密后文本长度: {len(decrypted)}")
-                print(f"[*] 解密后 vmess 数量: {decrypted.count('vmess://')}")
                 return decrypted
         except Exception as e:
             print(f"[-] 请求/解密失败: {e}")
     raise Exception("所有订阅源均无法拉取/解密！")
+
+def is_domain_resolvable(domain, timeout=3):
+    """
+    校验域名是否可以解析出 IP。
+    返回 True 表示可解析（节点可能有效），False 表示不可解析（节点必失效）。
+    """
+    if not domain:
+        return False
+    # 如果 server 本身就是 IP，直接认为有效
+    try:
+        socket.inet_aton(domain)
+        return True
+    except OSError:
+        pass
+    try:
+        socket.setdefaulttimeout(timeout)
+        socket.getaddrinfo(domain, None)
+        return True
+    except (socket.gaierror, socket.timeout, OSError):
+        return False
 
 def clean_node_name(ps_name, server_addr, existing_names):
     """
@@ -71,37 +79,47 @@ def clean_node_name(ps_name, server_addr, existing_names):
 def parse_vmess_links(decrypted_text):
     vmess_nodes = []
     existing_names = set()
-
-    # 提取所有 vmess:// 链接（支持 URL-safe Base64 的 - 和 _）
-    links = re.findall(r'vmess://[A-Za-z0-9+/=_-]+', decrypted_text)
-    print(f"[*] 正则匹配到 {len(links)} 个 vmess 链接")
-
-    for idx, link in enumerate(links):
+    
+    # 提取所有 vmess:// 链接
+    links = re.findall(r'vmess://[a-zA-Z0-9+/=]+', decrypted_text)
+    for link in links:
         try:
             b64_str = link.replace("vmess://", "")
-            # 补齐 Base64 padding
-            padding = len(b64_str) % 4
-            if padding:
-                b64_str += "=" * (4 - padding)
-            # 兼容 URL-safe Base64
-            b64_str = b64_str.replace("-", "+").replace("_", "/")
-
             raw_json = base64.b64decode(b64_str).decode('utf-8')
             node_info = json.loads(raw_json)
-
+            
             # 清理和规范化名称
             valid_name = clean_node_name(node_info.get("ps", ""), node_info.get("add", ""), existing_names)
             node_info["ps"] = valid_name
-
+            
             # 重新生成规范的 vmess 链接
             new_b64 = base64.b64encode(json.dumps(node_info).encode('utf-8')).decode('utf-8')
             new_link = f"vmess://{new_b64}"
-
+            
             vmess_nodes.append((new_link, node_info))
         except Exception as e:
-            print(f"[-] 解析第 {idx+1} 个节点异常: {e}")
-            print(f"    原始链接: {link[:80]}...")
+            print(f"[-] 解析节点异常: {e}")
     return vmess_nodes
+
+def filter_valid_nodes(nodes):
+    """
+    过滤掉服务器域名无法解析的节点。
+    对每个节点的 server 地址做 DNS 校验，只保留可解析的。
+    """
+    valid_nodes = []
+    total = len(nodes)
+    print(f"[*] 开始 DNS 校验，共 {total} 个节点...")
+
+    for idx, (link, info) in enumerate(nodes, 1):
+        addr = info.get("add", "")
+        name = info.get("ps", "unknown")
+        if is_domain_resolvable(addr):
+            print(f"[+] ({idx}/{total}) 保留: {name} ({addr})")
+            valid_nodes.append((link, info))
+        else:
+            print(f"[-] ({idx}/{total}) 丢弃: {name} ({addr}) —— DNS 无法解析")
+
+    return valid_nodes
 
 def generate_v2ray(vmess_nodes):
     all_links = "\n".join([item[0] for item in vmess_nodes])
@@ -114,7 +132,7 @@ def generate_clash(vmess_nodes):
     for _, n in vmess_nodes:
         name = n.get("ps")
         proxy_names.append(name)
-
+        
         server_host = n.get("host") if n.get("host") else n.get("add")
         proxy_item = {
             "name": name,
@@ -136,7 +154,7 @@ def generate_clash(vmess_nodes):
         }
         if n.get("net") == "httpupgrade":
             proxy_item["http-opts"]["v2ray-http-upgrade"] = True
-
+            
         proxies.append(proxy_item)
 
     clash_config = {
@@ -181,7 +199,7 @@ def generate_clash(vmess_nodes):
 
 def generate_singbox(vmess_nodes):
     node_tags = [n.get("ps") for _, n in vmess_nodes]
-
+    
     # 构建 outbounds
     outbounds = [
         {
@@ -329,7 +347,14 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 共解析到 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
+    print(f"[*] 共解析到 {len(nodes)} 个原始节点")
+
+    # ===== 新增：DNS 校验，过滤无效节点 =====
+    nodes = filter_valid_nodes(nodes)
+    print(f"[*] 过滤后剩余 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
+
+    if not nodes:
+        raise Exception("过滤后没有可用节点！订阅源可能已全部失效。")
 
     # 1. 生成 v2ray 订阅
     v2ray_content = generate_v2ray(nodes)
