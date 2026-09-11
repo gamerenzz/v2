@@ -6,11 +6,11 @@ import yaml
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import unpad
 
-# 1. 解密密钥与偏移量
+# 1. 解密参数
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 内置订阅源
+# 2. 内置订阅源列表
 URLS = [
     "https://bannedbook.github.io/fanqiang/vsp-en.py",
     "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-en.py",
@@ -35,18 +35,11 @@ def fetch_and_decrypt():
     raise Exception("所有订阅源均无法拉取/解密！")
 
 def clean_node_name(ps_name, server_addr, existing_names):
-    """
-    智能清理节点名称：
-    如果 ps 是广告网址（如 https://lihi1.com...），则使用 server 前缀作为名称并自动去重
-    """
     name = ps_name.strip()
-    # 判断是否为 URL 链接广告
     if name.startswith("http://") or name.startswith("https://") or not name:
-        # 从 server (例如 fr2e-wobx.v2freevpn.com) 提取前缀 'fr2e'
         prefix = server_addr.split("-")[0] if "-" in server_addr else server_addr.split(".")[0]
         name = prefix.lower()
 
-    # 去重处理，避免同名导致 sing-box / clash 崩溃
     original_name = name
     count = 1
     while name in existing_names:
@@ -59,7 +52,6 @@ def parse_vmess_links(decrypted_text):
     vmess_nodes = []
     existing_names = set()
     
-    # 提取所有 vmess:// 链接
     links = re.findall(r'vmess://[a-zA-Z0-9+/=]+', decrypted_text)
     for link in links:
         try:
@@ -67,11 +59,9 @@ def parse_vmess_links(decrypted_text):
             raw_json = base64.b64decode(b64_str).decode('utf-8')
             node_info = json.loads(raw_json)
             
-            # 清理和规范化名称
             valid_name = clean_node_name(node_info.get("ps", ""), node_info.get("add", ""), existing_names)
             node_info["ps"] = valid_name
             
-            # 重新生成规范的 vmess 链接
             new_b64 = base64.b64encode(json.dumps(node_info).encode('utf-8')).decode('utf-8')
             new_link = f"vmess://{new_b64}"
             
@@ -139,8 +129,6 @@ def generate_clash(vmess_nodes):
             }
         ],
         "rules": [
-            "DOMAIN-SUFFIX,v2freevpn.com,DIRECT",
-            "DOMAIN-SUFFIX,18838005.xyz,DIRECT",
             "DOMAIN-SUFFIX,cn,DIRECT",
             "DOMAIN-KEYWORD,baidu,DIRECT",
             "DOMAIN-KEYWORD,qq,DIRECT",
@@ -159,7 +147,6 @@ def generate_clash(vmess_nodes):
 def generate_singbox(vmess_nodes):
     node_tags = [n.get("ps") for _, n in vmess_nodes]
     
-    # 构建 outbounds
     outbounds = [
         {
             "type": "selector",
@@ -223,8 +210,6 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
-                        "v2freevpn.com",
-                        "18838005.xyz",
                         ".cn"
                     ],
                     "server": "dns-direct"
@@ -278,9 +263,7 @@ def generate_singbox(vmess_nodes):
                 },
                 {
                     "domain_suffix": [
-                        ".cn",
-                        "v2freevpn.com",
-                        "18838005.xyz"
+                        ".cn"
                     ],
                     "action": "route",
                     "outbound": "direct"
@@ -308,25 +291,23 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 共解析到 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
+    print(f"[*] 共解析到 {len(nodes)} 个节点：{[n['ps'] for _, n in nodes]}")
 
-    # 1. 生成 v2ray 订阅
+    # 1. 生成 v2ray.txt
     v2ray_content = generate_v2ray(nodes)
     with open("v2ray.txt", "w", encoding="utf-8") as f:
         f.write(v2ray_content)
-    print("[+] 生成 v2ray.txt 成功！")
 
-    # 2. 生成 clash 配置
+    # 2. 生成 clash.yaml
     clash_content = generate_clash(nodes)
     with open("clash.yaml", "w", encoding="utf-8") as f:
         f.write(clash_content)
-    print("[+] 生成 clash.yaml 成功！")
 
-    # 3. 生成 singbox 1.14.0 配置
+    # 3. 生成 singbox.json
     singbox_content = generate_singbox(nodes)
     with open("singbox.json", "w", encoding="utf-8") as f:
         f.write(singbox_content)
-    print("[+] 生成 singbox.json 成功！")
+    print("[+] 全部配置生成完毕！")
 
 if __name__ == "__main__":
     main()
