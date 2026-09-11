@@ -10,28 +10,91 @@ from Crypto.Util.Padding import unpad
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 真实有效的主订阅源列表（按优先级排列）
-URLS = [
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/refs/heads/master/docs/vsp-cn.py"
-
+# 2. 备用固定链接（用于 API 速率限制时的兜底）
+STATIC_FALLBACK_URLS = [
+    https://raw.githubusercontent.com/bannedbook/fanqiang/refs/heads/master/docs/vsp-cn.py
 ]
 
+def get_latest_remote_urls():
+    """
+    通过 GitHub API 自动扫描 docs/ 目录下所有 .py 文件，
+    并按最新提交时间（Commit Date）从新到旧排序返回下载链接列表。
+    """
+    dynamic_urls = []
+    api_url = "https://api.github.com/repos/bannedbook/fanqiang/contents/docs"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "Accept": "application/vnd.github.v3+json"
+    }
+    
+    try:
+        print("[*] 正在通过 GitHub API 自动探测 docs/ 目录下的最新文件...")
+        resp = requests.get(api_url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            files = resp.json()
+            # 过滤出所有以 .py 结尾的文件
+            py_files = [f for f in files if f.get("name", "").endswith(".py") and f.get("type") == "file"]
+            
+            # 对每一个 py 文件，获取其最后一次 commit 的修改时间进行排序
+            file_with_dates = []
+            for f in py_files:
+                file_name = f.get("name")
+                download_url = f.get("download_url")
+                
+                # 获取该文件的单个 commit 时间
+                commit_api = f"https://api.github.com/repos/bannedbook/fanqiang/commits?path=docs/{file_name}&page=1&per_page=1"
+                try:
+                    c_resp = requests.get(commit_api, headers=headers, timeout=5)
+                    if c_resp.status_code == 200 and len(c_resp.json()) > 0:
+                        commit_date = c_resp.json()[0]["commit"]["committer"]["date"]
+                    else:
+                        commit_date = ""
+                except Exception:
+                    commit_date = ""
+                
+                file_with_dates.append((file_name, download_url, commit_date))
+
+            # 按照修改时间倒序排列（最新的在最前）
+            file_with_dates.sort(key=lambda x: x[2], reverse=True)
+
+            print(f"[+] 自动发现 {len(file_with_dates)} 个文件（按最新更新时间排序）：")
+            for fname, durl, fdate in file_with_dates:
+                print(f"    - {fname} (更新时间: {fdate})")
+                dynamic_urls.append(durl)
+
+        else:
+            print(f"[-] GitHub API 返回状态码: {resp.status_code}，将启用备用固定源")
+    except Exception as e:
+        print(f"[-] 自动探测异常: {e}，将启用备用固定源")
+
+    # 将动态扫描出的最新链接放在最前面，后接备用链接去重后兜底
+    final_urls = dynamic_urls + [u for u in STATIC_FALLBACK_URLS if u not in dynamic_urls]
+    return final_urls
+
 def fetch_and_decrypt():
+    urls = get_latest_remote_urls()
     headers = {"User-Agent": "NekoBox/Android/6.5.0"}
-    for url in URLS:
+
+    for url in urls:
         try:
-            print(f"[*] 正在尝试拉取: {url}")
+            print(f"[*] 正在尝试拉取并解密: {url}")
             resp = requests.get(url, headers=headers, timeout=15)
             if resp.status_code == 200 and resp.text.strip():
                 encrypted_base64 = resp.text.strip()
                 raw_cipher = base64.b64decode(encrypted_base64)
                 cipher = AES.new(KEY, AES.MODE_CBC, IV)
                 decrypted = unpad(cipher.decrypt(raw_cipher), AES.block_size).decode('utf-8')
-                print("[+] 解密成功！")
-                return decrypted
+                
+                # 简单验证解密内容是否包含 vmess 节点
+                if "vmess://" in decrypted:
+                    print(f"[+] 成功从 {url} 获取并解密最新节点数据！")
+                    return decrypted
+                else:
+                    print(f"[-] {url} 解密成功但未发现节点数据，尝试下一个文件...")
         except Exception as e:
-            print(f"[-] 请求/解密失败: {e}")
-    raise Exception("所有订阅源均无法拉取/解密！")
+            print(f"[-] 处理 {url} 失败: {e}")
+
+    raise Exception("所有动态与静态订阅源均无法拉取或解密！")
 
 def clean_node_name(ps_name, server_addr, existing_names):
     name = ps_name.strip()
