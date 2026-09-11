@@ -92,8 +92,6 @@ proxy-groups:
   - us3e
   - us4e
 rules:
-- DOMAIN-SUFFIX,v2freevpn.com,DIRECT
-- DOMAIN-SUFFIX,18838005.xyz,DIRECT
 - DOMAIN-SUFFIX,cn,DIRECT
 - DOMAIN-KEYWORD,baidu,DIRECT
 - DOMAIN-KEYWORD,qq,DIRECT
