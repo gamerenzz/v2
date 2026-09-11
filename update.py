@@ -1,7 +1,6 @@
 import base64
 import json
 import re
-import socket
 import requests
 import yaml
 from Crypto.Cipher import AES
@@ -34,26 +33,6 @@ def fetch_and_decrypt():
         except Exception as e:
             print(f"[-] 请求/解密失败: {e}")
     raise Exception("所有订阅源均无法拉取/解密！")
-
-def is_domain_resolvable(domain, timeout=3):
-    """
-    校验域名是否可以解析出 IP。
-    返回 True 表示可解析（节点可能有效），False 表示不可解析（节点必失效）。
-    """
-    if not domain:
-        return False
-    # 如果 server 本身就是 IP，直接认为有效
-    try:
-        socket.inet_aton(domain)
-        return True
-    except OSError:
-        pass
-    try:
-        socket.setdefaulttimeout(timeout)
-        socket.getaddrinfo(domain, None)
-        return True
-    except (socket.gaierror, socket.timeout, OSError):
-        return False
 
 def clean_node_name(ps_name, server_addr, existing_names):
     """
@@ -100,26 +79,6 @@ def parse_vmess_links(decrypted_text):
         except Exception as e:
             print(f"[-] 解析节点异常: {e}")
     return vmess_nodes
-
-def filter_valid_nodes(nodes):
-    """
-    过滤掉服务器域名无法解析的节点。
-    对每个节点的 server 地址做 DNS 校验，只保留可解析的。
-    """
-    valid_nodes = []
-    total = len(nodes)
-    print(f"[*] 开始 DNS 校验，共 {total} 个节点...")
-
-    for idx, (link, info) in enumerate(nodes, 1):
-        addr = info.get("add", "")
-        name = info.get("ps", "unknown")
-        if is_domain_resolvable(addr):
-            print(f"[+] ({idx}/{total}) 保留: {name} ({addr})")
-            valid_nodes.append((link, info))
-        else:
-            print(f"[-] ({idx}/{total}) 丢弃: {name} ({addr}) —— DNS 无法解析")
-
-    return valid_nodes
 
 def generate_v2ray(vmess_nodes):
     all_links = "\n".join([item[0] for item in vmess_nodes])
@@ -264,6 +223,7 @@ def generate_singbox(vmess_nodes):
             "rules": [
                 {
                     "domain_suffix": [
+                        "v2freevpn.com",
                         "18838005.xyz",
                         ".cn"
                     ],
@@ -319,6 +279,7 @@ def generate_singbox(vmess_nodes):
                 {
                     "domain_suffix": [
                         ".cn",
+                        "v2freevpn.com",
                         "18838005.xyz"
                     ],
                     "action": "route",
@@ -347,14 +308,7 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 共解析到 {len(nodes)} 个原始节点")
-
-    # ===== 新增：DNS 校验，过滤无效节点 =====
-    nodes = filter_valid_nodes(nodes)
-    print(f"[*] 过滤后剩余 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
-
-    if not nodes:
-        raise Exception("过滤后没有可用节点！订阅源可能已全部失效。")
+    print(f"[*] 共解析到 {len(nodes)} 个有效节点：{[n['ps'] for _, n in nodes]}")
 
     # 1. 生成 v2ray 订阅
     v2ray_content = generate_v2ray(nodes)
