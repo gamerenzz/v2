@@ -12,7 +12,7 @@ IV = b"36KeAARKZuKF39N9"
 
 # 2. 备用固定链接（用于 API 速率限制时的兜底）
 STATIC_FALLBACK_URLS = [
-    https://raw.githubusercontent.com/bannedbook/fanqiang/refs/heads/master/docs/vsp-cn.py
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-cn.py"
 ]
 
 def get_latest_remote_urls():
