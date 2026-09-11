@@ -10,74 +10,114 @@ from Crypto.Util.Padding import unpad
 KEY = b"36KeAARKZuKF39N9LFyycLUyKMhZDq0B"
 IV = b"36KeAARKZuKF39N9"
 
-# 2. 备用固定链接（用于 API 速率限制时的兜底）
-STATIC_FALLBACK_URLS = [
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-cn.py"
-]
-
-def get_latest_remote_urls():
+def get_github_latest_urls():
     """
-    通过 GitHub API 自动扫描 docs/ 目录下所有 .py 文件，
-    并按最新提交时间（Commit Date）从新到旧排序返回下载链接列表。
+    通过 GitHub API 自动扫描 bannedbook/fanqiang 仓库 docs/ 下所有 .py 文件及其最后提交时间
     """
-    dynamic_urls = []
-    api_url = "https://api.github.com/repos/bannedbook/fanqiang/contents/docs"
+    results = []
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+        "User-Agent": "Mozilla/5.0",
         "Accept": "application/vnd.github.v3+json"
     }
+    api_url = "https://api.github.com/repos/bannedbook/fanqiang/contents/docs"
     
     try:
-        print("[*] 正在通过 GitHub API 自动探测 docs/ 目录下的最新文件...")
+        print("[*] 正在扫描 GitHub (bannedbook/fanqiang/docs)...")
         resp = requests.get(api_url, headers=headers, timeout=10)
         if resp.status_code == 200:
             files = resp.json()
-            # 过滤出所有以 .py 结尾的文件
             py_files = [f for f in files if f.get("name", "").endswith(".py") and f.get("type") == "file"]
             
-            # 对每一个 py 文件，获取其最后一次 commit 的修改时间进行排序
-            file_with_dates = []
             for f in py_files:
-                file_name = f.get("name")
+                name = f.get("name")
                 download_url = f.get("download_url")
-                
-                # 获取该文件的单个 commit 时间
-                commit_api = f"https://api.github.com/repos/bannedbook/fanqiang/commits?path=docs/{file_name}&page=1&per_page=1"
+                # 查询该文件的最后一次提交时间
+                c_api = f"https://api.github.com/repos/bannedbook/fanqiang/commits?path=docs/{name}&page=1&per_page=1"
                 try:
-                    c_resp = requests.get(commit_api, headers=headers, timeout=5)
+                    c_resp = requests.get(c_api, headers=headers, timeout=5)
                     if c_resp.status_code == 200 and len(c_resp.json()) > 0:
                         commit_date = c_resp.json()[0]["commit"]["committer"]["date"]
                     else:
-                        commit_date = ""
+                        commit_date = "1970-01-01T00:00:00Z"
                 except Exception:
-                    commit_date = ""
+                    commit_date = "1970-01-01T00:00:00Z"
                 
-                file_with_dates.append((file_name, download_url, commit_date))
-
-            # 按照修改时间倒序排列（最新的在最前）
-            file_with_dates.sort(key=lambda x: x[2], reverse=True)
-
-            print(f"[+] 自动发现 {len(file_with_dates)} 个文件（按最新更新时间排序）：")
-            for fname, durl, fdate in file_with_dates:
-                print(f"    - {fname} (更新时间: {fdate})")
-                dynamic_urls.append(durl)
-
-        else:
-            print(f"[-] GitHub API 返回状态码: {resp.status_code}，将启用备用固定源")
+                results.append({
+                    "source": "GitHub",
+                    "name": name,
+                    "url": download_url,
+                    "date": commit_date
+                })
     except Exception as e:
-        print(f"[-] 自动探测异常: {e}，将启用备用固定源")
+        print(f"[-] GitHub API 探测异常: {e}")
+    return results
 
-    # 将动态扫描出的最新链接放在最前面，后接备用链接去重后兜底
-    final_urls = dynamic_urls + [u for u in STATIC_FALLBACK_URLS if u not in dynamic_urls]
-    return final_urls
+def get_gitlab_latest_urls():
+    """
+    通过 GitLab API 自动扫描 bobmolen/cloud 仓库根目录下所有 .py 文件及其最后提交时间
+    """
+    results = []
+    headers = {"User-Agent": "Mozilla/5.0"}
+    api_url = "https://gitlab.com/api/v4/projects/bobmolen%2Fcloud/repository/tree?ref=master"
+    
+    try:
+        print("[*] 正在扫描 GitLab (bobmolen/cloud)...")
+        resp = requests.get(api_url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            files = resp.json()
+            py_files = [f for f in files if f.get("name", "").endswith(".py") and f.get("type") == "blob"]
+            
+            for f in py_files:
+                name = f.get("name")
+                download_url = f"https://gitlab.com/bobmolen/cloud/raw/master/{name}"
+                # 查询该文件在 GitLab 的最新 commit 时间
+                c_api = f"https://gitlab.com/api/v4/projects/bobmolen%2Fcloud/repository/commits?path={name}&page=1&per_page=1"
+                try:
+                    c_resp = requests.get(c_api, headers=headers, timeout=5)
+                    if c_resp.status_code == 200 and len(c_resp.json()) > 0:
+                        commit_date = c_resp.json()[0]["committed_date"]
+                    else:
+                        commit_date = "1970-01-01T00:00:00Z"
+                except Exception:
+                    commit_date = "1970-01-01T00:00:00Z"
+                
+                results.append({
+                    "source": "GitLab",
+                    "name": name,
+                    "url": download_url,
+                    "date": commit_date
+                })
+    except Exception as e:
+        print(f"[-] GitLab API 探测异常: {e}")
+    return results
+
+def get_all_dynamic_urls():
+    """
+    合并 GitHub 与 GitLab 的文件列表，并按更新时间降序排列（只返回动态发现的文件）
+    """
+    gh_files = get_github_latest_urls()
+    gl_files = get_gitlab_latest_urls()
+    
+    all_files = gh_files + gl_files
+    if not all_files:
+        raise Exception("未能在 GitHub 或 GitLab 上扫描到任何 .py 订阅文件！")
+
+    # 按提交时间降序（最新更新的文件排在最前）
+    all_files.sort(key=lambda x: x["date"], reverse=True)
+    
+    print(f"\n[+] 动态扫描到的文件列表（已按最新提交时间排序）：")
+    for item in all_files:
+        print(f"    - [{item['source']}] {item['name']} | 最后修改时间: {item['date']}")
+        
+    return [item["url"] for item in all_files]
 
 def fetch_and_decrypt():
-    urls = get_latest_remote_urls()
+    urls = get_all_dynamic_urls()
     headers = {"User-Agent": "NekoBox/Android/6.5.0"}
 
     for url in urls:
         try:
-            print(f"[*] 正在尝试拉取并解密: {url}")
+            print(f"\n[*] 正在尝试拉取并解密最新文件: {url}")
             resp = requests.get(url, headers=headers, timeout=15)
             if resp.status_code == 200 and resp.text.strip():
                 encrypted_base64 = resp.text.strip()
@@ -85,16 +125,15 @@ def fetch_and_decrypt():
                 cipher = AES.new(KEY, AES.MODE_CBC, IV)
                 decrypted = unpad(cipher.decrypt(raw_cipher), AES.block_size).decode('utf-8')
                 
-                # 简单验证解密内容是否包含 vmess 节点
                 if "vmess://" in decrypted:
-                    print(f"[+] 成功从 {url} 获取并解密最新节点数据！")
+                    print(f"[+] 成功从最新文件解密节点数据：{url}")
                     return decrypted
                 else:
-                    print(f"[-] {url} 解密成功但未发现节点数据，尝试下一个文件...")
+                    print(f"[-] {url} 解密成功但未发现有效 vmess 节点，尝试次新文件...")
         except Exception as e:
             print(f"[-] 处理 {url} 失败: {e}")
 
-    raise Exception("所有动态与静态订阅源均无法拉取或解密！")
+    raise Exception("所有动态扫描到的文件均无法成功拉取或解密！")
 
 def clean_node_name(ps_name, server_addr, existing_names):
     name = ps_name.strip()
@@ -355,7 +394,7 @@ def generate_singbox(vmess_nodes):
 def main():
     decrypted_text = fetch_and_decrypt()
     nodes = parse_vmess_links(decrypted_text)
-    print(f"[*] 成功获取并解密 {len(nodes)} 个节点：{[n['ps'] for _, n in nodes]}")
+    print(f"\n[*] 成功获取并解密 {len(nodes)} 个节点：{[n['ps'] for _, n in nodes]}")
 
     with open("v2ray.txt", "w", encoding="utf-8") as f:
         f.write(generate_v2ray(nodes))
@@ -366,7 +405,7 @@ def main():
     with open("singbox.json", "w", encoding="utf-8") as f:
         f.write(generate_singbox(nodes))
 
-    print("[+] 全部更新完毕！")
+    print("[+] 全部文件（v2ray.txt / clash.yaml / singbox.json）更新完毕！")
 
 if __name__ == "__main__":
     main()
