@@ -22,6 +22,7 @@
     "rules": [
       {
         "domain_suffix": [
+          "v2freevpn.com",
           "18838005.xyz",
           ".cn"
         ],
@@ -167,6 +168,7 @@
       {
         "domain_suffix": [
           ".cn",
+          "v2freevpn.com",
           "18838005.xyz"
         ],
         "action": "route",
