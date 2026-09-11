@@ -12,7 +12,7 @@ IV = b"36KeAARKZuKF39N9"
 
 # 2. 真实有效的主订阅源列表（按优先级排列）
 URLS = [
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-zh.py"
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/refs/heads/master/docs/vsp-cn.py"
 
 ]
 
