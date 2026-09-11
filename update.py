@@ -12,10 +12,9 @@ IV = b"36KeAARKZuKF39N9"
 
 # 2. 真实有效的主订阅源列表（按优先级排列）
 URLS = [
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp.py",
-    "https://bannedbook.github.io/fanqiang/vsp.py",
-    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp.py",
-    "https://gitlab.com/bobmolen/cloud/raw/master/vsp.py"
+    "https://bannedbook.github.io/fanqiang/vsp-en.py",
+    "https://raw.githubusercontent.com/bannedbook/fanqiang/master/docs/vsp-en.py",
+    "https://gitlab.com/bobmolen/cloud/raw/master/vsp-en.py"
 ]
 
 def fetch_and_decrypt():
