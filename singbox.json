@@ -90,112 +90,112 @@
     {
       "type": "vmess",
       "tag": "fr1a",
-      "server": "fr1a-20260812xxx.18838005.xyz",
+      "server": "fr1a-20260812xxx.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "fr1a-20260812xxx.18838005.xyz",
+        "host": "fr1a-20260812xxx.85888880.xyz",
         "path": "/windows11"
       }
     },
     {
       "type": "vmess",
       "tag": "us1a",
-      "server": "us1a-20260812add.18838005.xyz",
+      "server": "us1a-20260812add.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us1a-20260812add.18838005.xyz",
+        "host": "us1a-20260812add.85888880.xyz",
         "path": "/windows"
       }
     },
     {
       "type": "vmess",
       "tag": "us2a",
-      "server": "us2a-20260812kid.18838005.xyz",
+      "server": "us2a-20260812kid.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us2a-20260812kid.18838005.xyz",
+        "host": "us2a-20260812kid.85888880.xyz",
         "path": "/windows8"
       }
     },
     {
       "type": "vmess",
       "tag": "us3a",
-      "server": "us3a-20260812okc.18838005.xyz",
+      "server": "us3a-20260812okc.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us3a-20260812okc.18838005.xyz",
+        "host": "us3a-20260812okc.85888880.xyz",
         "path": "/windows10"
       }
     },
     {
       "type": "vmess",
       "tag": "us4a",
-      "server": "us4a-20260830ued.18838005.xyz",
+      "server": "us4a-20260830ued.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us4a-20260830ued.18838005.xyz",
+        "host": "us4a-20260830ued.85888880.xyz",
         "path": "/windows11"
       }
     },
     {
       "type": "vmess",
       "tag": "us5a",
-      "server": "us5a-20260828ket.18838005.xyz",
+      "server": "us5a-20260828ket.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us5a-20260828ket.18838005.xyz",
+        "host": "us5a-20260828ket.85888880.xyz",
         "path": "/windows11"
       }
     },
     {
       "type": "vmess",
       "tag": "us6a",
-      "server": "us6a-20260828aeo.18838005.xyz",
+      "server": "us6a-20260828aeo.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us6a-20260828aeo.18838005.xyz",
+        "host": "us6a-20260828aeo.85888880.xyz",
         "path": "/windows11"
       }
     },
     {
       "type": "vmess",
       "tag": "us7a",
-      "server": "us7a-20260830pag.18838005.xyz",
+      "server": "us7a-20260830pag.85888880.xyz",
       "server_port": 80,
       "uuid": "c97cf46e-1554-36cb-8b36-c3556b883dc4",
       "security": "auto",
       "alter_id": 0,
       "transport": {
         "type": "httpupgrade",
-        "host": "us7a-20260830pag.18838005.xyz",
+        "host": "us7a-20260830pag.85888880.xyz",
         "path": "/windows11"
       }
     },
